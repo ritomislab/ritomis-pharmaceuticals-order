@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Ritomis Pharmaceuticals - Place orders</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="assets/css/theme.css" rel="stylesheet" type="text/css" media="all" />
+    <link href="assets/css/jquery.dataTables.min.css" rel="stylesheet" type="text/css" media="all" />
+    <link rel="preload" as="font" href="assets/fonts/Inter-UI-upright.var.woff2" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" as="font" href="assets/fonts/Inter-UI.var.woff2" type="font/woff2" crossorigin="anonymous">
+</head>
+
+<body>
+
+<!-- Access key -->
+<section id="mraccess" class="bg-primary-3 min-vh-100 py-5" style="display: block;">
+    <div class="container">
+        <div class="row justify-content-center pt-6">
+            <div class="col-xl-4 col-lg-5 col-md-6">
+                <div class="text-center mb-4">
+                    <h2 class="mb-1 h1 text-light">Ritomis Pharmaceuticals</h2>
+                    <h4 class="mb-1 text-light">Items availability for orders</h4>
+                    <hr class="bg-secondary">
+                </div>
+
+                <div class="form-group mb-4">
+                    <input type="password" name="stockist_code" id="stockist_code" placeholder="enter your access key" class="form-control text-center">
+                </div>
+
+                <div class="form-group mb-4" style="display: none;" id="access_err_holder">
+                    <div class="alert alert-danger" role="alert">
+                        <span id="access_err_message"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button id="stockrequest" class="btn-block btn btn-primary">Get Stock Statement</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stock statement output -->
+<section id="mroutput" style="display: none;">
+
+    <div class="container">
+
+        <div class="row justify-content-center mb-3">
+            <div class="col">
+                <a href="#" id="go_back">Go back</a> | <!-- <a href="#" id="refresh" onclick="stock_request()">Refresh</a> | --> <a href="#" id="print_ss" onclick="window:print()">Print</a>
+                <br><br>
+                <h2 class="mb-0">Ritomis Pharmaceuticals - Items availability for orders</h2>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col">
+                <table id="data-table-stock" class="table table-striped display">
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<script type="text/javascript" src="assets/js/jquery.min.js"></script>
+<script type="text/javascript" src="assets/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="assets/js/bootstrap.js"></script>
+
+<script type="text/javascript">
+
+    // Clean on go back
+    $("#go_back").click(function() {
+        $("#stock_rows").html("");
+        $("#stockist_code").val("");
+        $("#mroutput").hide();
+        $("#mraccess").show();
+    });
+
+    // hide error message when access key field is used
+    $("#stockist_code").keypress(function() {
+        $("#access_err_holder").hide();
+    });
+
+    // listen for enter key
+    $("#stockist_code").on("keyup", function(e) {
+        if (e.keyCode === 13) {
+            stock_request();
+        }
+    });
+
+
+    // Fetch stock statement
+    $("#stockrequest").click(function() {
+        stock_request();
+    });
+
+    // stock request
+    function stock_request() {
+        let stockist_code = $("#stockist_code").val();
+
+        $.ajax({
+            // url: "https://apis.ritomis.org/getstockitems",
+            url: "http://127.0.0.1:8000/getstockitems",
+            data: JSON.stringify({stockist_code: stockist_code, auth_code: 'youCanHackThisAuthCodeAndIDontCare'}),
+            type: "POST",
+            success: function (response) {
+                // Hide access key screen
+                $("#mraccess").hide();
+                $("#mroutput").show();
+                process_datatable_for_stock(response);
+            },
+            error: function (response) {
+                console.log(response.responseText);
+                $("#access_err_message").html("<strong>" + JSON.parse(response.responseText).error + "</strong><br>");
+                $("#access_err_holder").show();
+            }
+        });
+    }
+
+    // Process stock data to present in tabular format
+    function process_stock_data(stock_data) {
+        let output_len = stock_data.stockall.length;
+        if (output_len === 0) {
+        } else {
+            let table_rows_html = "";
+            let row_num = 0;
+
+            // companies
+            Object.keys(stock_data.stockall).forEach(function(key_gr) {
+                let items_json = stock_data.stockall[key_gr];
+                let items_count = items_json.stock.length;
+
+                for (let counter = 0; counter < items_count; counter++) {
+                    row_num = row_num + 1;
+                    let curr_item = items_json.stock[counter];
+
+                    let tag = "";
+                    if (curr_item.available == 1) {
+                        tag = `<span class="badge badge-success m-1">Stock available</span>`;
+                    } else {
+                        tag = `<span class="badge badge-warning m-1">Stock expected soon</span>`;
+                    }
+
+                    table_rows_html += `
+                    <tr>
+                        <td scope="col" width="15%">${row_num}</td>
+                        <td scope="col" width="30%">${curr_item.GR_NAME}</td>
+                        <td scope="col" width="30%">${curr_item.ITEM_NAME}<br><span class="text-muted">${curr_item.UNIT}, ${curr_item.PACKING}</span></td>
+                        <td scope="col" width="25%">${tag}</td>
+                    </tr>
+                `;
+                }
+
+            });
+            $("#stock_rows").html(table_rows_html); // add stock rows
+        }
+    }
+
+    // Process stock data to present in tabular format
+    function process_datatable_for_stock(stock_data) {
+        let output_len = stock_data.stockall.length;
+        if (output_len === 0) {
+        } else {
+            let table_rows_html = "";
+            let row_num = 0;
+            let items_dataset = [];
+
+            // companies
+            Object.keys(stock_data.stockall).forEach(function(key_gr) {
+                let items_json = stock_data.stockall[key_gr];
+                let items_count = items_json.stock.length;
+
+                for (let counter = 0; counter < items_count; counter++) {
+                    row_num = row_num + 1;
+                    let curr_item = items_json.stock[counter];
+                    let tag = "";
+                    if (curr_item.available == 1) {
+                        tag = `<span class="badge badge-success m-1">Stock available</span>`;
+                    } else {
+                        tag = `<span class="badge badge-warning m-1">Stock expected soon</span>`;
+                    }
+                    let curr_item_data_table = [
+                        curr_item.GR_NAME,
+                        `${curr_item.ITEM_NAME}<br><span class="text-muted">${curr_item.UNIT}, ${curr_item.PACKING}`,
+                        tag
+                    ];
+                    items_dataset.push(curr_item_data_table);
+                }
+
+            });
+            $("#data-table-stock").DataTable({
+                data: items_dataset,
+                columns: [
+                    {title: "Company Name"},
+                    {title: "Item name / Packing"},
+                    {title: "Availability"},
+                ],
+                paging: false,
+                info: false,
+                order: [[2, "asc"], [1, "asc"]]
+            });
+        }
+    }
+
+</script>
+
+</body>
+
+</html>
