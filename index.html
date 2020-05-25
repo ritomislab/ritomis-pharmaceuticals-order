@@ -122,45 +122,6 @@
     }
 
     // Process stock data to present in tabular format
-    function process_stock_data(stock_data) {
-        let output_len = stock_data.stockall.length;
-        if (output_len === 0) {
-        } else {
-            let table_rows_html = "";
-            let row_num = 0;
-
-            // companies
-            Object.keys(stock_data.stockall).forEach(function(key_gr) {
-                let items_json = stock_data.stockall[key_gr];
-                let items_count = items_json.stock.length;
-
-                for (let counter = 0; counter < items_count; counter++) {
-                    row_num = row_num + 1;
-                    let curr_item = items_json.stock[counter];
-
-                    let tag = "";
-                    if (curr_item.available == 1) {
-                        tag = `<span class="badge badge-success m-1">Stock available</span>`;
-                    } else {
-                        tag = `<span class="badge badge-warning m-1">Stock expected soon</span>`;
-                    }
-
-                    table_rows_html += `
-                    <tr>
-                        <td scope="col" width="15%">${row_num}</td>
-                        <td scope="col" width="30%">${curr_item.GR_NAME}</td>
-                        <td scope="col" width="30%">${curr_item.ITEM_NAME}<br><span class="text-muted">${curr_item.UNIT}, ${curr_item.PACKING}</span></td>
-                        <td scope="col" width="25%">${tag}</td>
-                    </tr>
-                `;
-                }
-
-            });
-            $("#stock_rows").html(table_rows_html); // add stock rows
-        }
-    }
-
-    // Process stock data to present in tabular format
     function process_datatable_for_stock(stock_data) {
         let output_len = stock_data.stockall.length;
         if (output_len === 0) {
