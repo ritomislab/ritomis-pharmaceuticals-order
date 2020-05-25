@@ -52,6 +52,7 @@
                 <a href="#" id="go_back">Go back</a> | <!-- <a href="#" id="refresh" onclick="stock_request()">Refresh</a> | --> <a href="#" id="print_ss" onclick="window:print()">Print</a>
                 <br><br>
                 <h2 class="mb-0">Ritomis Pharmaceuticals - Items availability for orders</h2>
+                <span class="text-muted">Type company / medicine name in search box below to filter</span>
             </div>
         </div>
 
@@ -78,6 +79,9 @@
         $("#stockist_code").val("");
         $("#mroutput").hide();
         $("#mraccess").show();
+        let data_table = $('#data-table-stock').DataTable();
+        data_table.clear();
+        data_table.destroy();
     });
 
     // hide error message when access key field is used
