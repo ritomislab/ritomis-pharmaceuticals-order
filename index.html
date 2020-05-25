@@ -103,8 +103,8 @@
         let stockist_code = $("#stockist_code").val();
 
         $.ajax({
-            // url: "https://apis.ritomis.org/getstockitems",
-            url: "http://127.0.0.1:8000/getstockitems",
+            url: "https://apis.ritomis.org/getstockitems",
+            //url: "http://127.0.0.1:8000/getstockitems",
             data: JSON.stringify({stockist_code: stockist_code, auth_code: 'youCanHackThisAuthCodeAndIDontCare'}),
             type: "POST",
             success: function (response) {
